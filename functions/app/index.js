@@ -1,21 +1,28 @@
 /* Express App */
-import express from 'express'
-import cors from 'cors'
-import morgan from 'morgan'
-import bodyParser from 'body-parser'
-import compression from 'compression'
-import customLogger from '../utils/logger'
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import compression from 'compression';
+import customLogger from '../utils/logger';
+
+import {
+  sendNotifications,
+  checkReceipts,
+} from '../controller/notificationController';
 
 /* My express App */
 export default function expressApp(functionName) {
-  const app = express()
-  const router = express.Router()
+  const app = express();
+  const router = express.Router();
 
   // gzip responses
-  router.use(compression())
+  router.use(compression());
 
   // Set router base path for local dev
-  const routerBasePath = process.env.NODE_ENV === 'dev' ? `/${functionName}` : `/.netlify/functions/${functionName}/`
+  const routerBasePath =
+    process.env.NODE_ENV === 'dev'
+      ? `/${functionName}`
+      : `/.netlify/functions/${functionName}/`;
 
   /* define routes */
   router.get('/', (req, res) => {
@@ -62,37 +69,62 @@ export default function expressApp(functionName) {
         </div>
       </body>
     </html>
-  `
-    res.send(html)
-  })
-
-  router.get('/users', (req, res) => {
-    res.json({
-      users: [
-        {
-          name: 'steve',
-        },
-        {
-          name: 'joe',
-        },
-      ],
-    })
-  })
-
-  router.get('/hello/', function(req, res) {
-    res.send('hello world')
-  })
+  `;
+    res.send(html);
+  });
 
   // Attach logger
-  app.use(morgan(customLogger))
+  app.use(morgan(customLogger));
 
   // Setup routes
-  app.use(routerBasePath, router)
+  app.use(routerBasePath, router);
 
   // Apply express middlewares
-  router.use(cors())
-  router.use(bodyParser.json())
-  router.use(bodyParser.urlencoded({ extended: true }))
+  router.use(cors());
+  router.use(express.json());
+  router.use(express.urlencoded({ extended: true }));
 
-  return app
+  router.post('/send', (req, res) => {
+    if (
+      req.body.pushTokens &&
+      req.body.title &&
+      req.body.content &&
+      req.body.data
+    ) {
+      (async () => {
+        const result = await sendNotifications(req.body.pushTokens, {
+          title: req.body.title,
+          body: req.body.content,
+          data: req.body.data,
+        });
+        res.status(200).send({ return_code: 200, data: result });
+      })();
+    } else {
+      res
+        .status(400)
+        .json({ return_code: 400, data: JSON.stringify(req.body) });
+    }
+  });
+
+  router.post('/check', (req, res) => {
+    if (req.body.ids) {
+      (async () => {
+        const result = await checkReceipts(req.body.ids);
+        res.status(200).send({ return_code: 200, data: result });
+      })();
+    } else {
+      res
+        .status(400)
+        .json({ return_code: 400, data: 'Require correct params.' });
+    }
+  });
+
+  app.use((req, res, next) => {
+    res.status(404).send({
+      return_code: 404,
+      data: 'not found',
+    });
+  });
+
+  return app;
 }

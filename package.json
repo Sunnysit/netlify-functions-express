@@ -4,9 +4,9 @@
   "private": true,
   "dependencies": {
     "aws-serverless-express": "^3.2.0",
-    "body-parser": "^1.18.3",
     "compression": "^1.7.2",
     "cors": "^2.8.4",
+    "expo-server-sdk": "^3.6.0",
     "express": "^4.16.3",
     "isomorphic-fetch": "^2.2.1",
     "morgan": "^1.9.0",
@@ -29,6 +29,7 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-plugin-module-resolver": "^3.1.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.7.0",
     "babel-preset-react": "^6.24.1",
     "cross-env": "^5.2.0",
