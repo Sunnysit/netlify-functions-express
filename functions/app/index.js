@@ -119,11 +119,12 @@ export default function expressApp(functionName) {
     }
   });
 
-  app.use((req, res, next) => {
-    res.status(404).send({
-      return_code: 404,
-      data: 'not found',
-    });
+  router.get('*', (req, res) => {
+    res.status(404).json({ return_code: 404, data: 'Not Found' });
+  });
+
+  router.post('*', (req, res) => {
+    res.status(404).json({ return_code: 404, data: 'Not Found' });
   });
 
   return app;
